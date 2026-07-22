@@ -1,0 +1,17 @@
+name: Bug report
+description: Report a reproducible extraction or normalization defect
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes: { label: Summary, description: Describe the incorrect behavior using synthetic text. }
+    validations: { required: true }
+  - type: textarea
+    id: reproduce
+    attributes: { label: Reproduction, description: Include a minimal synthetic excerpt, command, expected result, and actual result. }
+    validations: { required: true }
+  - type: input
+    id: environment
+    attributes: { label: Environment, description: Input format, operating system, and Python version }
+    validations: { required: true }
