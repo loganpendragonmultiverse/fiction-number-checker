@@ -91,3 +91,36 @@ def test_read_only_formats_with_words(tmp_path: Path, suffix: str) -> None:
     assert [m.normalized_value for m in report.mentions] == [21, 22]
     assert len(report.review_groups) == 1
     assert path.read_bytes() == original
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Mara visited her cousin one day.",
+        "Mara waited again one day.",
+        "Mara carried +twenty coins.",
+        "Mara carried + twenty coins.",
+        "Mara carried plus twenty coins.",
+        "Mara carried PLUS twenty-one coins.",
+    ],
+)
+def test_duration_suffixes_and_positive_signs_do_not_invent_facts(text: str) -> None:
+    assert extract_mentions(text, subjects=["Mara"]) == []
+
+
+@pytest.mark.parametrize(
+    "text,value,kind",
+    [
+        ("Mara returned in one day.", 1, "duration"),
+        ("Mara waited for twenty-one hours.", 75600, "duration"),
+        ("Mara carried twenty coins.", 20, "count"),
+        ("Mara is twenty-one years old.", 21, "age"),
+        ("Mara carried surplus twenty coins.", 20, "count"),
+    ],
+)
+def test_whole_word_duration_cues_preserve_supported_contexts(
+    text: str, value: int, kind: str
+) -> None:
+    mentions = extract_mentions(text, subjects=["Mara"])
+    assert len(mentions) == 1
+    assert (mentions[0].normalized_value, mentions[0].kind) == (value, kind)

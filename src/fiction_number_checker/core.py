@@ -62,10 +62,10 @@ WORD_PATTERN = re.compile(
     re.IGNORECASE,
 )
 DURATION_CUE = re.compile(
-    r"(?:for|after|before|within|in|lasted|waited|spent|took|takes|over)\s*$", re.IGNORECASE
+    r"\b(?:for|after|before|within|in|lasted|waited|spent|took|takes|over)\s*$", re.IGNORECASE
 )
 UNSUPPORTED_WORD = re.compile(
-    rf"(?:\b(?:{SMALL_WORDS}|{TENS_WORDS}|hundred|thousand|million|billion|and|point|minus|negative|half|a|an)|[\d-])[- ]*$",
+    rf"(?:\b(?:{SMALL_WORDS}|{TENS_WORDS}|hundred|thousand|million|billion|and|point|minus|plus|negative|half|a|an)|[+\d-])[- ]*$",
     re.IGNORECASE,
 )
 

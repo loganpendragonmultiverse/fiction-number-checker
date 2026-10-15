@@ -56,3 +56,5 @@ are preserved. These syntactic rules cannot disambiguate every idiom or a name t
 looks exactly like a supported quantity; review the excerpt.
 
 Automatic subject guesses exclude standalone number-word tokens. Explicit `--subject` filters still support characters named Seven or similar ambiguous names.
+
+Duration cues match whole words: suffixes such as `in` in `cousin` or `again` do not count. Signed number-word phrases include `+twenty` and `plus twenty` and are excluded.
