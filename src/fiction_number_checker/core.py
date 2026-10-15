@@ -185,7 +185,12 @@ def find_subjects(sentence: str, requested: list[str]) -> list[str]:
     found = []
     for match in SUBJECT.finditer(sentence):
         candidate = match.group(1)
-        if candidate.split()[0] not in SUBJECT_STOP and candidate not in found:
+        if (
+            candidate.split()[0] not in SUBJECT_STOP
+            and candidate.split()[0].casefold() not in ONES
+            and candidate.split()[0].casefold() not in TENS
+            and candidate not in found
+        ):
             found.append(candidate)
     return found[:3]
 

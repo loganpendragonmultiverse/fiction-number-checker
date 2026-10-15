@@ -59,6 +59,8 @@ def test_names_idioms_and_unsupported_phrases(text: str) -> None:
 
 
 def test_attribution_case_and_mixed_numeric() -> None:
+    assert extract_mentions("Mara carried Twenty-One coins.")[0].subject == "Mara"
+    assert extract_mentions("Seven carried two coins.", subjects=["Seven"])[0].subject == "Seven"
     text = "Mara waited two hours. Two hours passed. Dorian carried Twenty-One coins. Mara has 3 coins."
     mentions = extract_mentions(text, subjects=["Dorian"])
     assert len(mentions) == 1 and mentions[0].normalized_value == 21

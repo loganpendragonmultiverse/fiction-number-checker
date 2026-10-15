@@ -54,3 +54,5 @@ not partially converted. Number-word distance, money and percentage phrases are
 outside this bounded feature. Original text, offsets, excerpts and subject filters
 are preserved. These syntactic rules cannot disambiguate every idiom or a name that
 looks exactly like a supported quantity; review the excerpt.
+
+Automatic subject guesses exclude standalone number-word tokens. Explicit `--subject` filters still support characters named Seven or similar ambiguous names.
