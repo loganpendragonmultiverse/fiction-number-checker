@@ -8,7 +8,7 @@ The result is a consistency checklist, not an automated verdict.
 
 Python 3.10 or newer is required.
 
-    python -m pip install "fiction-number-checker @ https://github.com/loganpendragonmultiverse/fiction-number-checker/releases/download/v1.0.0/fiction_number_checker-1.0.0-py3-none-any.whl"
+    python -m pip install "fiction-number-checker @ https://github.com/loganpendragonmultiverse/fiction-number-checker/releases/download/v1.1.0/fiction_number_checker-1.1.0-py3-none-any.whl"
     fiction-number-checker manuscript.docx --subject Mara --subject Dorian --markdown number-review.md --json number-review.json
     fiction-number-checker manuscript.epub --fail-on-review
 
@@ -20,7 +20,11 @@ Different values are not automatically inconsistent. Characters age, money is sp
 
 Files are processed locally and read-only. No manuscript text is uploaded or sent to an API. Reports contain excerpts and should be treated as manuscript material.
 
-Version 1 recognizes Arabic numerals and a focused set of English units. It does not resolve number words, dates, currencies without a dollar sign, chronology, pronouns, or narrative truth.
+Arabic numerals retain their existing detection. Version 1.1 also recognizes English
+number words zero through ninety-nine, including space or hyphen compounds, in
+`years old` ages, explicit duration contexts and a focused count vocabulary.
+It does not resolve dates, currencies without a dollar sign, chronology, pronouns,
+or narrative truth.
 
 ## Development
 
@@ -36,3 +40,17 @@ Contributions follow [CONTRIBUTING.md](CONTRIBUTING.md), security reports follow
 ## More open-source projects
 
 This project is part of the [Logan Pendragon Forge open-source collection](https://www.loganpendragonforge.com/open-source/). Browse the catalog for other released tools, source repositories, live demos, and downloads.
+
+## Number-word boundaries
+
+Examples: `Mara is twenty-one years old`, `Mara waited for two hours`,
+`Two years passed`, and `Mara carried ninety-nine coins`. Durations require a
+preceding cue (`for`, `after`, `before`, `within`, `in`, `lasted`, `waited`, `spent`,
+`took`, `takes`, `over`) or following `passed`/`elapsed`; an isolated `one day` or
+`one second` does not create a fact. Count nouns are people/persons, guards,
+soldiers, coins, ships, books, doors, rooms, horses, children and items, with singular
+forms where applicable. Unsupported larger, signed, decimal or `and` phrases are
+not partially converted. Number-word distance, money and percentage phrases are
+outside this bounded feature. Original text, offsets, excerpts and subject filters
+are preserved. These syntactic rules cannot disambiguate every idiom or a name that
+looks exactly like a supported quantity; review the excerpt.

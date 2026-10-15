@@ -17,6 +17,78 @@ FACT_PATTERN = re.compile(
     (?P<count>{NUMBER})
     """
 )
+ONES = dict(
+    zip(
+        [
+            "zero",
+            "one",
+            "two",
+            "three",
+            "four",
+            "five",
+            "six",
+            "seven",
+            "eight",
+            "nine",
+            "ten",
+            "eleven",
+            "twelve",
+            "thirteen",
+            "fourteen",
+            "fifteen",
+            "sixteen",
+            "seventeen",
+            "eighteen",
+            "nineteen",
+        ],
+        range(20),
+        strict=True,
+    )
+)
+TENS = dict(
+    zip(
+        ["twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"],
+        range(20, 100, 10),
+        strict=True,
+    )
+)
+SMALL_WORDS = "|".join(ONES)
+TENS_WORDS = "|".join(TENS)
+WORD_NUMBER = (
+    rf"(?:(?:{TENS_WORDS})(?:[- ](?:one|two|three|four|five|six|seven|eight|nine))?|{SMALL_WORDS})"
+)
+WORD_PATTERN = re.compile(
+    rf"\b(?P<number>{WORD_NUMBER})\s+(?P<unit>years?\s+old|years?|months?|weeks?|days?|hours?|minutes?|seconds?|people|persons?|guards?|soldiers?|coins?|ships?|books?|doors?|rooms?|horses?|children|items?)\b",
+    re.IGNORECASE,
+)
+DURATION_CUE = re.compile(
+    r"(?:for|after|before|within|in|lasted|waited|spent|took|takes|over)\s*$", re.IGNORECASE
+)
+UNSUPPORTED_WORD = re.compile(
+    rf"(?:\b(?:{SMALL_WORDS}|{TENS_WORDS}|hundred|thousand|million|billion|and|point|minus|negative|half|a|an)|[\d-])[- ]*$",
+    re.IGNORECASE,
+)
+
+
+def word_facts(sentence: str) -> list[tuple[int, str, str]]:
+    facts = []
+    for match in WORD_PATTERN.finditer(sentence):
+        prefix = sentence[: match.start()]
+        if UNSUPPORTED_WORD.search(prefix):
+            continue
+        unit = match.group("unit").casefold()
+        if (
+            unit.rstrip("s") in {"year", "month", "week", "day", "hour", "minute", "second"}
+            and not DURATION_CUE.search(prefix)
+            and not re.match(r"\s+(?:passed|elapsed)\b", sentence[match.end() :], re.IGNORECASE)
+        ):
+            continue
+        parts = re.split("[- ]", match.group("number").casefold())
+        value = sum(ONES.get(part, TENS.get(part, 0)) for part in parts)
+        facts.append((match.start(), match.group(0), f"{value} {unit}"))
+    return facts
+
+
 SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?])\s+|\n+")
 SUBJECT = re.compile(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b")
 SUBJECT_STOP = {
@@ -82,9 +154,13 @@ def extract_mentions(text: str, *, subjects: list[str] | None = None) -> list[Me
         if requested and not sentence_subjects:
             continue
         subject = ", ".join(sentence_subjects) if sentence_subjects else "Unassigned"
-        for match in FACT_PATTERN.finditer(sentence):
-            raw = match.group(0)
-            kind, value, unit = normalize_fact(raw)
+        facts = [
+            (match.start(), match.group(0), match.group(0))
+            for match in FACT_PATTERN.finditer(sentence)
+        ]
+        facts.extend(word_facts(sentence))
+        for start, raw, normalized in sorted(facts):
+            kind, value, unit = normalize_fact(normalized)
             mentions.append(
                 Mention(
                     value=raw,
@@ -93,7 +169,7 @@ def extract_mentions(text: str, *, subjects: list[str] | None = None) -> list[Me
                     normalized_unit=unit,
                     subject=subject,
                     context=sentence.strip(),
-                    offset=sentence_start + match.start(),
+                    offset=sentence_start + start,
                 )
             )
     return mentions
