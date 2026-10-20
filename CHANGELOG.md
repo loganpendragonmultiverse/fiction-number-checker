@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.1 - 2026-10-20
+
+- Package the four handoff guides and a synthetic example with both distributions.
+
+- Preserve full Arabic numbers, grouped decimals, plural inches and inline DOCX/EPUB text instead of splitting them into misleading facts.
+- Normalize all durations to seconds so equivalent day/hour and week/day quantities compare equally; month/year estimates remain approximate.
+- Exclude signed Arabic phrases rather than silently reporting their magnitude as positive.
+- Report unreadable or corrupt DOCX/EPUB members as controlled CLI errors.
+- Refuse non-finite quantities and no-clobber report conflicts, including symbolic-link outputs.
+
 ## 1.1.0 - 2026-10-15
 
 - Require whole-word duration cues and exclude positive-signed number-word phrases.

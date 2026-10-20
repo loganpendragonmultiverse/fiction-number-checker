@@ -8,7 +8,7 @@ The result is a consistency checklist, not an automated verdict.
 
 Python 3.10 or newer is required.
 
-    python -m pip install "fiction-number-checker @ https://github.com/loganpendragonmultiverse/fiction-number-checker/releases/download/v1.1.0/fiction_number_checker-1.1.0-py3-none-any.whl"
+    python -m pip install "fiction-number-checker @ https://github.com/loganpendragonmultiverse/fiction-number-checker/releases/download/v1.1.1/fiction_number_checker-1.1.1-py3-none-any.whl"
     fiction-number-checker manuscript.docx --subject Mara --subject Dorian --markdown number-review.md --json number-review.json
     fiction-number-checker manuscript.epub --fail-on-review
 
@@ -58,3 +58,11 @@ looks exactly like a supported quantity; review the excerpt.
 Automatic subject guesses exclude standalone number-word tokens. Explicit `--subject` filters still support characters named Seven or similar ambiguous names.
 
 Duration cues match whole words: suffixes such as `in` in `cousin` or `again` do not count. Signed number-word phrases include `+twenty` and `plus twenty` and are excluded.
+
+## Numeric and export boundaries
+
+Arabic numbers retain full ungrouped or comma-grouped values and decimal fractions. Numeric identifiers, malformed comma/decimal fragments, and Arabic quantities with explicit plus/minus signs or plus/minus/negative prefixes are excluded rather than reported as positive values. All durations are reported in seconds; a day is 86,400 seconds, a week seven days, and year/month estimates use 365.25/30.4375 days. These are comparison conventions, not inferred chronology. Non-finite quantities produce an error rather than invalid JSON. DOCX text runs and EPUB inline markup preserve adjacent text; EPUB HTML members are inspected in filename order, without claiming reading-order chronology.
+
+Reports require distinct new files. Existing files and leaf symbolic links are rejected before writing either requested report. A runtime I/O error can still leave an earlier new report written; this is not a multi-file transaction or a defense against hostile leaf or parent-directory replacement.
+
+Installed distributions include the four project guides under `share/fiction-number-checker` and a synthetic example in its `examples` subfolder.

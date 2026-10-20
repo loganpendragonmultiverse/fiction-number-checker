@@ -26,6 +26,10 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        outputs = [path for path in [args.json_path, args.markdown] if path is not None]
+        targets = [output_target(path) for path in outputs]
+        if len(targets) != len(set(targets)):
+            raise ValueError("JSON and Markdown outputs must be different files")
         report = analyze(args.source, subjects=args.subject)
         markdown = render_markdown(report)
         if args.json_path:
@@ -40,9 +44,18 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
 
-def write_new(path: Path, content: str) -> None:
-    target = path.expanduser().resolve()
+def output_target(path: Path) -> Path:
+    expanded = path.expanduser()
+    if expanded.is_symlink():
+        raise ValueError(f"output is a symbolic link: {expanded}")
+    target = expanded.absolute().parent.resolve() / expanded.name
     if target.exists():
         raise ValueError(f"output already exists: {target}")
+    return target
+
+
+def write_new(path: Path, content: str) -> None:
+    target = output_target(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(content, encoding="utf-8", newline="\n")
+    with target.open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(content)

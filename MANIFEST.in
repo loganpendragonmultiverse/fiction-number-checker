@@ -1,2 +1,6 @@
 include README.md LICENSE CHANGELOG.md
 recursive-include docs *.md
+
+include CONTRIBUTING.md CODE_OF_CONDUCT.md DEVELOPMENT.md TESTING.md SECURITY.md SUPPORT.md
+
+recursive-include examples *
