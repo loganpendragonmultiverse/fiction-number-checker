@@ -111,7 +111,7 @@ def test_duration_suffixes_and_positive_signs_do_not_invent_facts(text: str) -> 
 @pytest.mark.parametrize(
     "text,value,kind",
     [
-        ("Mara returned in one day.", 1, "duration"),
+        ("Mara returned in one day.", 86400, "duration"),
         ("Mara waited for twenty-one hours.", 75600, "duration"),
         ("Mara carried twenty coins.", 20, "count"),
         ("Mara is twenty-one years old.", 21, "age"),

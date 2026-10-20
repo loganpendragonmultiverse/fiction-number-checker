@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fiction-number-checker"
-version = "1.1.0"
+version = "1.1.1"
 description = "Extract numerical facts from fiction for human consistency review."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -32,3 +32,7 @@ strict = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=fiction_number_checker --cov-branch --cov-report=term-missing --cov-fail-under=90"
+
+[tool.setuptools.data-files]
+"share/fiction-number-checker" = ["README.md", "DEVELOPMENT.md", "TESTING.md", "CHANGELOG.md"]
+"share/fiction-number-checker/examples" = ["examples/review.txt"]

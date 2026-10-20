@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import re
 import zipfile
+import zlib
 from html.parser import HTMLParser
+from io import BytesIO
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -35,7 +37,7 @@ class TextExtractor(HTMLParser):
             self.parts.append(data)
 
     def text(self) -> str:
-        return normalize_text(" ".join(self.parts))
+        return normalize_text("".join(self.parts))
 
 
 def read_document(path: Path) -> str:
@@ -51,9 +53,12 @@ def read_document(path: Path) -> str:
             return normalize_text(source.read_text(encoding="utf-8"))
         except UnicodeError as exc:
             raise ValueError("text source must be UTF-8") from exc
-    if source.suffix.casefold() == ".docx":
-        return read_docx(source)
-    return read_epub(source)
+    try:
+        if source.suffix.casefold() == ".docx":
+            return read_docx(source)
+        return read_epub(source)
+    except (zipfile.BadZipFile, RuntimeError, NotImplementedError, EOFError, zlib.error) as exc:
+        raise ValueError("document archive contents could not be read") from exc
 
 
 def safe_archive(path: Path) -> zipfile.ZipFile:
@@ -83,17 +88,18 @@ def read_docx(path: Path) -> str:
             content = archive.read("word/document.xml")
         except KeyError as exc:
             raise ValueError("DOCX is missing word/document.xml") from exc
+    parts: list[str] = []
     try:
-        root = ElementTree.fromstring(content)
+        for _, element in ElementTree.iterparse(BytesIO(content), events=("end",)):
+            if element.tag.endswith("}t") and element.text:
+                parts.append(element.text)
+            elif element.tag.endswith(("}br", "}cr", "}p")):
+                parts.append("\n")
+            elif element.tag.endswith("}tab"):
+                parts.append("\t")
     except ElementTree.ParseError as exc:
         raise ValueError("DOCX document XML is invalid") from exc
-    parts: list[str] = []
-    for element in root.iter():
-        if element.tag.endswith("}t") and element.text:
-            parts.append(element.text)
-        elif element.tag.endswith("}p"):
-            parts.append("\n")
-    return normalize_text(" ".join(parts))
+    return normalize_text("".join(parts))
 
 
 def read_epub(path: Path) -> str:
@@ -105,13 +111,15 @@ def read_epub(path: Path) -> str:
         )
         if not names:
             raise ValueError("EPUB contains no HTML reading content")
-        extractor = TextExtractor()
+        chapters = []
         for name in names:
+            extractor = TextExtractor()
             try:
                 extractor.feed(archive.read(name).decode("utf-8"))
             except UnicodeError as exc:
                 raise ValueError(f"EPUB content is not UTF-8: {name}") from exc
-    return extractor.text()
+            chapters.append(extractor.text())
+    return "\n".join(chapters)
 
 
 def normalize_text(value: str) -> str:

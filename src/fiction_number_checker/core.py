@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import re
 from collections import defaultdict
 from pathlib import Path
@@ -7,14 +8,18 @@ from pathlib import Path
 from .models import Mention, Report, ReviewGroup
 from .readers import read_document
 
-NUMBER = r"(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d+)?"
+NUMBER = r"(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?"
 FACT_PATTERN = re.compile(
     rf"""(?ix)
-    (?P<money>\$\s*{NUMBER})
-    |
-    (?P<measure>{NUMBER}\s*(?:years?\s+old|years?|months?|weeks?|days?|hours?|minutes?|seconds?|miles?|kilometers?|kilometres?|km|meters?|metres?|feet|foot|inches?|percent|%))
-    |
-    (?P<count>{NUMBER})
+    (?<![\w.,+$-])
+    (?:
+        (?P<money>\$\s*{NUMBER})
+        |
+        (?P<measure>{NUMBER}\s*(?:years?\s+old|years?|months?|weeks?|days?|hours?|minutes?|seconds?|miles?|kilometers?|kilometres?|km|meters?|metres?|feet|foot|inch(?:es)?|percent|%))
+        |
+        (?P<count>{NUMBER})
+    )
+    (?!\w|[,.]\d)
     """
 )
 ONES = dict(
@@ -112,10 +117,10 @@ SUBJECT_STOP = {
 }
 
 UNIT_MAP = {
-    "year": ("duration", "days", 365.25),
-    "month": ("duration", "days", 30.4375),
-    "week": ("duration", "days", 7),
-    "day": ("duration", "days", 1),
+    "year": ("duration", "seconds", 365.25 * 86400),
+    "month": ("duration", "seconds", 30.4375 * 86400),
+    "week": ("duration", "seconds", 7 * 86400),
+    "day": ("duration", "seconds", 86400),
     "hour": ("duration", "seconds", 3600),
     "minute": ("duration", "seconds", 60),
     "second": ("duration", "seconds", 1),
@@ -157,6 +162,11 @@ def extract_mentions(text: str, *, subjects: list[str] | None = None) -> list[Me
         facts = [
             (match.start(), match.group(0), match.group(0))
             for match in FACT_PATTERN.finditer(sentence)
+            if not re.search(
+                r"(?:[+-]\s*|\b(?:minus|plus|negative)\s+)$",
+                sentence[: match.start()],
+                flags=re.IGNORECASE,
+            )
         ]
         facts.extend(word_facts(sentence))
         for start, raw, normalized in sorted(facts):
@@ -200,17 +210,22 @@ def normalize_fact(raw: str) -> tuple[str, float, str]:
     if not number_match:
         raise ValueError(f"number could not be normalized: {raw}")
     number = float(number_match.group(0).replace(",", ""))
+    if not math.isfinite(number):
+        raise ValueError("number is too large to normalize")
     lowered = raw.casefold().strip()
     if "$" in raw:
         return "money", round(number, 2), "currency units"
     if re.search(r"years?\s+old", lowered):
         return "age", number, "years"
     unit_text = lowered[number_match.end() :].strip()
-    unit_text = re.sub(r"s$", "", unit_text)
+    unit_text = "inch" if unit_text == "inches" else re.sub(r"s$", "", unit_text)
     mapped = UNIT_MAP.get(unit_text)
     if mapped:
         kind, unit, factor = mapped
-        return kind, round(number * factor, 6), unit
+        normalized = number * factor
+        if not math.isfinite(normalized):
+            raise ValueError("measurement is too large to normalize")
+        return kind, round(normalized, 6), unit
     return "count", number, "count"
 
 
